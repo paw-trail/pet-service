@@ -81,9 +81,35 @@ dependencies {
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
 
-    // ── 캐시 · 이벤트 ─────────────────────────────────────────
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // ── 이벤트 ────────────────────────────────────────────────
+    // starter-data-redis 를 뺐음
+    //
+    // 이 서비스는 Redis 를 쓰지 않는데 의존성만 있어도 자동 설정이 켜짐
+    // 그러면 상태 확인이 연결을 시도해 Redis 가 없는 환경에서 unhealthy 가 됨
+    // 기능은 멀쩡한데 상태만 틀리게 나오므로 진짜 문제의 신호를 못 믿게 됨
+    //
+    // * 캐시가 필요해지면 이 줄을 되살릴 것
+    //   자동 설정만 제외하는 방법도 있으나 그러면 왜 안 켜지는지 헤매게 됨
+    //
+    // * 페이징은 영향을 받지 않음
+    //   spring-data-commons 를 위에서 따로 선언해 두었음
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
+
+    // ── 객체 저장소 ───────────────────────────────────────────
+    // 반려동물 사진을 S3 에 둠
+    //
+    // 파일은 이 서버를 거치지 않음
+    // presigned URL 을 발급해 주고 브라우저가 S3 로 직접 PUT 하므로
+    // 서버는 파일 크기만큼의 메모리도 대역폭도 쓰지 않음
+    //
+    // s3         버킷 조작과 객체 삭제
+    // s3-transfer-manager 는 쓰지 않음, 큰 파일을 나눠 올릴 때 필요한 것임
+    //
+    // 인증 정보는 코드에 두지 않음
+    // DefaultCredentialsProvider 가 환경변수 AWS_ACCESS_KEY_ID ·
+    // AWS_SECRET_ACCESS_KEY 를 읽으며, 그 값은 각자 실행 구성에 둠
+    implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
+    implementation 'software.amazon.awssdk:s3'
 
     // ── Spring Cloud ──────────────────────────────────────────
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
@@ -110,7 +136,6 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-zipkin-test'
 
