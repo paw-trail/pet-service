@@ -50,4 +50,20 @@ public interface PetRepository {
      * favorite 과 visit_log 도 같은 이유로 하드입니다.
      */
     void delete(Pet pet);
+
+    /**
+     * 한 보호자의 반려동물을 전부 찾습니다.
+     *
+     * 탈퇴 처리가 씁니다. 지우기 전에 사진 키를 모으려고 한 번 읽습니다.
+     * 목록 조회와 달리 순서가 필요 없어 정렬을 걸지 않습니다.
+     */
+    List<Pet> findAllByAccountId(UUID accountId);
+
+    /**
+     * 한 보호자의 반려동물을 한 번에 지웁니다.
+     *
+     * 탈퇴 처리가 씁니다.
+     * 반환은 지운 행 수입니다. 이벤트 소비는 응답이 없어 로그가 유일한 흔적이라 남겨 둡니다.
+     */
+    int deleteAllByAccountId(UUID accountId);
 }
