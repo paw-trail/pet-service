@@ -95,6 +95,22 @@ dependencies {
     //   spring-data-commons 를 위에서 따로 선언해 두었음
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
 
+    // ── 객체 저장소 ───────────────────────────────────────────
+    // 반려동물 사진을 S3 에 둠
+    //
+    // 파일은 이 서버를 거치지 않음
+    // presigned URL 을 발급해 주고 브라우저가 S3 로 직접 PUT 하므로
+    // 서버는 파일 크기만큼의 메모리도 대역폭도 쓰지 않음
+    //
+    // s3         버킷 조작과 객체 삭제
+    // s3-transfer-manager 는 쓰지 않음, 큰 파일을 나눠 올릴 때 필요한 것임
+    //
+    // 인증 정보는 코드에 두지 않음
+    // DefaultCredentialsProvider 가 환경변수 AWS_ACCESS_KEY_ID ·
+    // AWS_SECRET_ACCESS_KEY 를 읽으며, 그 값은 각자 실행 구성에 둠
+    implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
+    implementation 'software.amazon.awssdk:s3'
+
     // ── Spring Cloud ──────────────────────────────────────────
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-starter-config'

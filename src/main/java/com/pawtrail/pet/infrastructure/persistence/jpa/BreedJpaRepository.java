@@ -1,6 +1,8 @@
 package com.pawtrail.pet.infrastructure.persistence.jpa;
 
 import com.pawtrail.pet.domain.model.Breed;
+import java.util.Collection;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -13,4 +15,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * 자세한 것은 BreedRepositoryImpl 에 적어 두었습니다.
  */
 public interface BreedJpaRepository extends JpaRepository<Breed, String> {
+
+    List<Breed> findAllByCodeIn(Collection<String> codes);
 }

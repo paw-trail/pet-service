@@ -1,6 +1,7 @@
 package com.pawtrail.pet.domain.repository;
 
 import com.pawtrail.pet.domain.model.Breed;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,4 +37,16 @@ public interface BreedRepository {
      * 45행짜리 고정 마스터라 페이징하지 않습니다.
      */
     List<Breed> findAllForDropdown();
+
+    /**
+     * 견종 코드 여럿으로 한 번에 찾습니다.
+     *
+     * 반려동물 목록을 내어 줄 때 견종 이름과 종과 맹견 여부를 채우는 재료입니다.
+     * 반려동물마다 findByCode 를 부르면 질의가 마릿수만큼 늘어나는데,
+     * 이 조립이 GET /internal/pets?ids= 에서 그대로 쓰이고 그쪽은 상한이 100 입니다.
+     *
+     * 없는 코드는 결과에서 빠질 뿐 오류가 아닙니다.
+     * 등록할 때 이미 막았으므로 저장된 값에는 없는 코드가 들어 있을 수 없습니다.
+     */
+    List<Breed> findAllByCodeIn(Collection<String> codes);
 }
