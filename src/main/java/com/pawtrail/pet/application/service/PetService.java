@@ -6,6 +6,7 @@ import com.pawtrail.common.message.outbox.OutboxEventRecorder;
 import com.pawtrail.pet.application.dto.input.PetCreateInput;
 import com.pawtrail.pet.application.dto.input.PetUpdateInput;
 import com.pawtrail.pet.application.support.AfterCommitExecutor;
+import com.pawtrail.pet.application.dto.output.PetInternalOutput;
 import com.pawtrail.pet.application.dto.output.PetOutput;
 import com.pawtrail.pet.application.dto.output.UploadUrlOutput;
 import com.pawtrail.pet.domain.enums.BreedSize;
@@ -302,6 +303,72 @@ public class PetService {
                     log.warn("반려동물을 찾지 못했습니다: accountId={}, petId={}", accountId, petId);
                     return new CustomException(PetErrorCode.PET_NOT_FOUND);
                 });
+    }
+
+    /**
+     * 다른 서비스에 여러 반려동물을 내어 줍니다.
+     *
+     * 부른 사람의 것만 돌려줍니다.
+     * 남의 식별자는 결과에서 빠지며 오류로 보지 않습니다.
+     * 없는 식별자도 같습니다. 남의 것을 "없는 것처럼" 다루면 존재 여부도 새지 않습니다.
+     *
+     * 빈 목록으로 부르면 조회하지 않습니다.
+     */
+    @Transactional(readOnly = true)
+    public List<PetInternalOutput> getInternalPets(UUID accountId, List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        List<Pet> pets = petRepository.findAllByIdIn(ids).stream()
+                .filter(pet -> pet.getAccountId().equals(accountId))
+                .toList();
+        if (pets.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, Breed> breeds = loadBreeds(pets);
+
+        return pets.stream()
+                .map(pet -> toInternalOutput(pet, breeds.get(pet.getBreedCode())))
+                .toList();
+    }
+
+    /**
+     * 다른 서비스에 반려동물 하나를 내어 줍니다.
+     *
+     * verdict 가 판정 재료로 부릅니다.
+     * 없거나 남의 것이면 같은 응답을 냅니다.
+     */
+    @Transactional(readOnly = true)
+    public PetInternalOutput getInternalPet(UUID accountId, UUID petId) {
+        Pet pet = getOwnedOrThrow(accountId, petId);
+
+        Breed breed = breedRepository.findByCode(pet.getBreedCode()).orElse(null);
+
+        return toInternalOutput(pet, breed);
+    }
+
+    /**
+     * 다른 서비스에 내어 줄 형태로 만듭니다.
+     *
+     * 사진과 메모를 담지 않습니다.
+     * 부르는 쪽이 쓰지 않는 값이고, 사진은 담으려면 건마다 서명을 만들어야 합니다.
+     */
+    private PetInternalOutput toInternalOutput(Pet pet, Breed breed) {
+        return new PetInternalOutput(
+                pet.getId(),
+                pet.getName(),
+                pet.getWeightKg(),
+                pet.getBreedSize(),
+                pet.isCarrier(),
+                pet.isStroller(),
+                pet.isVaccineCompleted(),
+                pet.isVaccineProofAvailable(),
+                pet.getBreedCode(),
+                breed == null ? null : breed.getNameKo(),
+                breed == null ? null : breed.getSpecies(),
+                breed != null && breed.isDangerous());
     }
 
     private Map<String, Breed> loadBreeds(List<Pet> pets) {
