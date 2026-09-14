@@ -3,6 +3,7 @@ package com.pawtrail.pet.infrastructure.persistence;
 import com.pawtrail.pet.domain.model.Breed;
 import com.pawtrail.pet.domain.repository.BreedRepository;
 import com.pawtrail.pet.infrastructure.persistence.jpa.BreedJpaRepository;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -19,5 +20,10 @@ public class BreedRepositoryImpl implements BreedRepository {
     @Override
     public Optional<Breed> findByCode(String code) {
         return breedJpaRepository.findById(code);
+    }
+
+    @Override
+    public List<Breed> findAllForDropdown() {
+        return breedJpaRepository.findAllForDropdown();
     }
 }
