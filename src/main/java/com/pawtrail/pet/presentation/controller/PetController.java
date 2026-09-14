@@ -8,6 +8,7 @@ import com.pawtrail.pet.application.dto.output.PetOutput;
 import com.pawtrail.pet.application.dto.output.UploadUrlOutput;
 import com.pawtrail.pet.application.service.PetService;
 import com.pawtrail.pet.presentation.request.PetCreateRequest;
+import com.pawtrail.pet.presentation.request.PetUpdateRequest;
 import com.pawtrail.pet.presentation.request.UploadUrlRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -17,6 +18,8 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -109,6 +112,53 @@ public class PetController {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
                 .body(CommonApiResponse.success(petService.getPet(principal.accountId(), petId)));
+    }
+
+    /**
+     * 반려동물을 고칩니다.
+     *
+     * 보낸 것만 바꿉니다. 안 보낸 필드는 건드리지 않습니다.
+     * 사진만 바꾸려고 보낸 요청이 이름까지 지우면 안 되기 때문입니다.
+     *
+     * 명시적 null 로 지울 수 있는 것은 사진과 메모뿐입니다.
+     * 나머지 여덟은 반려동물이 있는 한 반드시 값이 있어야 하므로 400 입니다.
+     *
+     * 체중을 바꾸면서 크기를 안 보내면 크기를 다시 계산합니다.
+     */
+    @PatchMapping("/{petId}")
+    public ResponseEntity<CommonApiResponse<PetOutput>> updatePet(
+            @CurrentUser CustomUserPrincipal principal,
+            @PathVariable UUID petId,
+            @Valid @RequestBody PetUpdateRequest request) {
+
+        PetOutput response =
+                petService.update(principal.accountId(), petId, request.toInput());
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(CommonApiResponse.success(response));
+    }
+
+    /**
+     * 반려동물을 지웁니다.
+     *
+     * 되돌릴 수 없습니다. 화면에 확인을 두어야 합니다.
+     *
+     * 마지막 한 마리도 지울 수 있습니다.
+     * 한 마리를 키우다 그 아이를 떠나보냈을 때 지울 수 없으면
+     * 프로필에 계속 남아 사용자가 서비스를 못 씁니다.
+     *
+     * 지운 것이 대표 반려동물이었으면 프론트가
+     * PATCH /users/me/default-pet 을 null 로 한 번 더 부릅니다.
+     */
+    @DeleteMapping("/{petId}")
+    public ResponseEntity<CommonApiResponse<Void>> deletePet(
+            @CurrentUser CustomUserPrincipal principal,
+            @PathVariable UUID petId) {
+
+        petService.delete(principal.accountId(), petId);
+
+        return ResponseEntity.ok(CommonApiResponse.success(null));
     }
 
     /**

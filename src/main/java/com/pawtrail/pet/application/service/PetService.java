@@ -2,10 +2,14 @@ package com.pawtrail.pet.application.service;
 
 import com.pawtrail.common.exception.CommonErrorCode;
 import com.pawtrail.common.exception.CustomException;
+import com.pawtrail.common.message.outbox.OutboxEventRecorder;
 import com.pawtrail.pet.application.dto.input.PetCreateInput;
+import com.pawtrail.pet.application.dto.input.PetUpdateInput;
+import com.pawtrail.pet.application.support.AfterCommitExecutor;
 import com.pawtrail.pet.application.dto.output.PetOutput;
 import com.pawtrail.pet.application.dto.output.UploadUrlOutput;
 import com.pawtrail.pet.domain.enums.BreedSize;
+import com.pawtrail.pet.domain.event.payload.PetProfileUpdatedEvent;
 import com.pawtrail.pet.domain.exception.PetErrorCode;
 import com.pawtrail.pet.domain.model.Breed;
 import com.pawtrail.pet.domain.model.Pet;
@@ -13,8 +17,10 @@ import com.pawtrail.pet.domain.provider.StorageProvider;
 import com.pawtrail.pet.domain.repository.BreedRepository;
 import com.pawtrail.pet.domain.repository.PetRepository;
 import com.pawtrail.pet.infrastructure.config.StorageProperties;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -41,6 +47,8 @@ public class PetService {
     private final BreedRepository breedRepository;
     private final StorageProvider storageProvider;
     private final StorageProperties storageProperties;
+    private final OutboxEventRecorder outboxEventRecorder;
+    private final AfterCommitExecutor afterCommitExecutor;
 
     /**
      * 반려동물을 등록합니다.
@@ -113,12 +121,7 @@ public class PetService {
      */
     @Transactional(readOnly = true)
     public PetOutput getPet(UUID accountId, UUID petId) {
-        Pet pet = petRepository.findById(petId)
-                .filter(found -> found.getAccountId().equals(accountId))
-                .orElseThrow(() -> {
-                    log.warn("반려동물을 찾지 못했습니다: accountId={}, petId={}", accountId, petId);
-                    return new CustomException(PetErrorCode.PET_NOT_FOUND);
-                });
+        Pet pet = getOwnedOrThrow(accountId, petId);
 
         Breed breed = breedRepository.findByCode(pet.getBreedCode()).orElse(null);
 
@@ -150,6 +153,155 @@ public class PetService {
                 storageProvider.presignUpload(key, contentType, contentLength),
                 storageProvider.publicUrl(key),
                 storageProperties.uploadExpiresSeconds());
+    }
+
+    /**
+     * 반려동물을 고칩니다.
+     *
+     * 보낸 것만 바꿉니다. 안 보낸 필드는 지금 값을 그대로 둡니다.
+     * 명시적 null 로 지울 수 있는 것은 사진과 메모뿐이며, 나머지는 요청 계층이 막았습니다.
+     *
+     * 체중이 바뀌었는데 크기를 안 보냈으면 크기를 다시 계산합니다.
+     * 안 그러면 체중을 12 에서 30 으로 고쳐도 크기가 SMALL 로 남아
+     * 판정이 틀린 값으로 나갑니다.
+     *
+     * 값이 하나도 안 바뀌었으면 이벤트를 발행하지 않습니다.
+     * 이벤트의 뜻이 "네가 가진 것이 낡았다" 인데 안 바뀌었으면 낡지 않았습니다.
+     *
+     * 사진을 바꾸거나 지우면 옛 객체를 지웁니다.
+     * 커밋 뒤에 지우는 이유는 AfterCommitExecutor 에 적어 두었습니다.
+     */
+    @Transactional
+    public PetOutput update(UUID accountId, UUID petId, PetUpdateInput input) {
+        Pet pet = getOwnedOrThrow(accountId, petId);
+
+        String name = input.nameProvided() ? input.name() : pet.getName();
+        String breedCode = input.breedCodeProvided() ? input.breedCode() : pet.getBreedCode();
+        BigDecimal weightKg = input.weightKgProvided() ? input.weightKg() : pet.getWeightKg();
+
+        // 크기를 정하는 순서가 등록과 같음
+        // 보냈으면 그 값, 아니면 체중에서 계산, 체중도 안 바뀌었으면 지금 값
+        BreedSize breedSize;
+        if (input.breedSizeProvided()) {
+            breedSize = input.breedSize();
+        } else if (input.weightKgProvided()) {
+            breedSize = BreedSize.fromWeight(weightKg);
+        } else {
+            breedSize = pet.getBreedSize();
+        }
+
+        boolean carrier = input.hasCarrierProvided() ? input.hasCarrier() : pet.isCarrier();
+        boolean stroller = input.hasStrollerProvided() ? input.hasStroller() : pet.isStroller();
+        boolean vaccineCompleted = input.vaccineCompletedProvided()
+                ? input.vaccineCompleted() : pet.isVaccineCompleted();
+        boolean vaccineProofAvailable = input.vaccineProofAvailableProvided()
+                ? input.vaccineProofAvailable() : pet.isVaccineProofAvailable();
+
+        // 견종을 *바꾸는* 요청일 때만 있는 코드인지 강제함
+        //
+        // 지금 값을 그대로 두는 요청까지 막으면 안 됨
+        // breed_code 에 외래 키가 없어 저장된 코드가 목록에서 사라질 수 있는데
+        // (다음 번호 마이그레이션으로 견종을 지우는 경우가 그것임)
+        // 그때 이름이나 메모만 고치려는 요청까지 400 이 됨
+        //
+        // 조회는 그 상태를 이미 허용하고 있음
+        // getPet 은 orElse(null) 로 받고 toOutput 이 견종 정보를 null 로 채움
+        // 읽기는 되는데 이름 수정만 막히면 앞뒤가 맞지 않음
+        //
+        // 화면이 폼 전체를 보내 breedCode 가 늘 실려 오므로
+        // "보냈는가" 가 아니라 "지금 값과 다른가" 로 가름
+        boolean breedChanged = !breedCode.equals(pet.getBreedCode());
+        Breed breed;
+        if (breedChanged) {
+            breed = breedRepository.findByCode(breedCode)
+                    .orElseThrow(() -> {
+                        log.warn("없는 견종 코드입니다: accountId={}, breedCode={}",
+                                accountId, breedCode);
+                        return new CustomException(CommonErrorCode.VALIDATION_FAILED);
+                    });
+        } else {
+            breed = breedRepository.findByCode(breedCode).orElse(null);
+        }
+
+        String oldPhotoKey = pet.getPhotoUrl();
+        String photoKey = input.photoUrlProvided()
+                ? toStoredKey(accountId, input.photoUrl())
+                : oldPhotoKey;
+        String note = input.noteProvided() ? input.note() : pet.getNote();
+
+        boolean verdictRelevantChanged = pet.isVerdictRelevantChangedFrom(
+                weightKg, breedSize, breedCode,
+                carrier, stroller, vaccineCompleted, vaccineProofAvailable);
+        boolean anythingChanged = verdictRelevantChanged
+                || !name.equals(pet.getName())
+                || !Objects.equals(photoKey, oldPhotoKey)
+                || !Objects.equals(note, pet.getNote());
+
+        pet.update(name, breedCode, weightKg, breedSize,
+                carrier, stroller, vaccineCompleted, vaccineProofAvailable, photoKey, note);
+
+        if (anythingChanged) {
+            outboxEventRecorder.record(
+                    new PetProfileUpdatedEvent(pet.getId(), accountId, verdictRelevantChanged));
+            log.info("반려동물을 고쳤습니다: petId={}, verdictRelevantChanged={}",
+                    pet.getId(), verdictRelevantChanged);
+        }
+
+        // 사진이 실제로 바뀌었을 때만 옛 객체를 지움
+        if (oldPhotoKey != null && !oldPhotoKey.equals(photoKey)) {
+            afterCommitExecutor.run(() -> storageProvider.delete(oldPhotoKey),
+                    "반려동물 옛 사진 삭제 petId=" + pet.getId());
+        }
+
+        // save 를 부르지 않음
+        // 트랜잭션 안에서 조회한 엔티티라 변경 감지가 커밋 시점에 UPDATE 를 냄
+        return toOutput(pet, breed);
+    }
+
+    /**
+     * 반려동물을 지웁니다.
+     *
+     * 하드 딜리트입니다. 마지막 한 마리도 지울 수 있습니다.
+     * 반려동물 0마리는 정식 상태이며, 한 마리를 키우다 그 아이를 떠나보냈을 때
+     * 지울 수 없으면 프로필에 계속 남아 사용자가 서비스를 못 씁니다.
+     *
+     * 지울 때도 pet.profile.updated 를 참으로 발행합니다.
+     * 받는 쪽이 하는 일이 "그 반려동물 캐시를 지운다" 하나라 수정과 같습니다.
+     *
+     * 대표 반려동물 정리는 프론트가 합니다.
+     * 지운 것이 대표였으면 PATCH /users/me/default-pet 을 null 로 한 번 더 부릅니다.
+     * 빠뜨려도 user 가 그 식별자로 조회했을 때 0마리로 처리하므로 안전한 쪽으로 실패합니다.
+     */
+    @Transactional
+    public void delete(UUID accountId, UUID petId) {
+        Pet pet = getOwnedOrThrow(accountId, petId);
+
+        String photoKey = pet.getPhotoUrl();
+        petRepository.delete(pet);
+
+        outboxEventRecorder.record(new PetProfileUpdatedEvent(petId, accountId, true));
+
+        if (photoKey != null) {
+            afterCommitExecutor.run(() -> storageProvider.delete(photoKey),
+                    "반려동물 사진 삭제 petId=" + petId);
+        }
+
+        log.info("반려동물을 지웠습니다: accountId={}, petId={}", accountId, petId);
+    }
+
+    /**
+     * 내 반려동물을 가져오고, 없거나 남의 것이면 막습니다.
+     *
+     * 두 경우에 같은 응답을 냅니다.
+     * 403 을 주면 "그 반려동물은 있는데 네 것이 아니다" 를 알려 주는 셈이 됩니다.
+     */
+    private Pet getOwnedOrThrow(UUID accountId, UUID petId) {
+        return petRepository.findById(petId)
+                .filter(found -> found.getAccountId().equals(accountId))
+                .orElseThrow(() -> {
+                    log.warn("반려동물을 찾지 못했습니다: accountId={}, petId={}", accountId, petId);
+                    return new CustomException(PetErrorCode.PET_NOT_FOUND);
+                });
     }
 
     private Map<String, Breed> loadBreeds(List<Pet> pets) {

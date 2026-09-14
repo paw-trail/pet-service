@@ -103,6 +103,61 @@ public class Pet extends BaseEntity {
     }
 
     /**
+     * 판정에 쓰이는 값이 이 값들과 다른지 봅니다.
+     *
+     * 축은 일곱입니다. 체중 · 크기 · 이동장 · 유모차 · 접종 여부 · 증명서 보유 · 견종입니다.
+     * 이름과 사진과 메모는 판정에 쓰이지 않으므로 보지 않습니다.
+     *
+     * 견종이 축인 것은 맹견 판정 때문입니다.
+     * 견종이 바뀌면 맹견 여부가 달라져 판정이 뒤집힐 수 있습니다.
+     *
+     * 체중만 compareTo 로 견줍니다.
+     * BigDecimal 의 equals 는 자릿수까지 보아 12 와 12.0 을 다른 값으로 봅니다.
+     *
+     * 요청에 그 필드가 있었는지가 아니라 값이 실제로 달라졌는지를 봅니다.
+     * 화면이 폼 전체를 보내므로 이름만 고쳐도 일곱 축이 전부 실려 오고,
+     * 있었는지만 보면 "이름만 바꾸면 거짓" 이라는 설계가 한 번도 작동하지 않습니다.
+     */
+    public boolean isVerdictRelevantChangedFrom(
+            BigDecimal weightKg, BreedSize breedSize, String breedCode,
+            boolean carrier, boolean stroller,
+            boolean vaccineCompleted, boolean vaccineProofAvailable) {
+
+        return this.weightKg.compareTo(weightKg) != 0
+                || this.breedSize != breedSize
+                || !this.breedCode.equals(breedCode)
+                || this.carrier != carrier
+                || this.stroller != stroller
+                || this.vaccineCompleted != vaccineCompleted
+                || this.vaccineProofAvailable != vaccineProofAvailable;
+    }
+
+    /**
+     * 보낸 값으로 바꿉니다.
+     *
+     * 호출하는 쪽이 "안 보낸 것은 지금 값" 으로 이미 채워서 넘깁니다.
+     * 여기서 필드마다 null 을 가리면 부분 수정 규칙이 엔티티와 서비스 두 곳에 생깁니다.
+     *
+     * 사진과 메모는 null 이 "지운다" 는 뜻이라 그대로 받습니다.
+     */
+    public void update(String name, String breedCode, BigDecimal weightKg, BreedSize breedSize,
+            boolean carrier, boolean stroller,
+            boolean vaccineCompleted, boolean vaccineProofAvailable,
+            String photoUrl, String note) {
+
+        this.name = name;
+        this.breedCode = breedCode;
+        this.weightKg = weightKg;
+        this.breedSize = breedSize;
+        this.carrier = carrier;
+        this.stroller = stroller;
+        this.vaccineCompleted = vaccineCompleted;
+        this.vaccineProofAvailable = vaccineProofAvailable;
+        this.photoUrl = photoUrl;
+        this.note = note;
+    }
+
+    /**
      * 반려동물을 등록합니다.
      *
      * breedSize 는 호출하는 쪽이 이미 정한 값을 넘깁니다.
