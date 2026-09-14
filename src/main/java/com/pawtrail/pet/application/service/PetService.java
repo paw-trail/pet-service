@@ -32,12 +32,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 반려동물을 등록하고 조회합니다.
+ * 반려동물을 등록하고 조회하고 고치고 지웁니다.
  *
  * 누구의 반려동물인지는 요청에서 받지 않습니다.
  * 게이트웨이가 토큰을 검증해 X-User-Id 로 넣어 준 값을 씁니다.
  *
- * 수정과 삭제는 다음 이슈입니다.
+ * 다른 서비스가 부르는 /internal 두 개도 이 클래스가 맡습니다.
+ * 내어 주는 값이 달라 출력 객체만 PetInternalOutput 으로 가릅니다.
+ *
+ * 탈퇴 정리는 AccountWithdrawnService 가 따로 맡습니다.
+ * 표와 객체 저장소를 가로지르는 동작이고, 부르는 경로도 사용자 요청이 아니라 이벤트입니다.
  */
 @Slf4j
 @Service
