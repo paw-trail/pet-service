@@ -1,16 +1,13 @@
 package com.pawtrail.pet.domain.repository;
 
 import com.pawtrail.pet.domain.model.Breed;
+import java.util.List;
 import java.util.Optional;
 
 /**
  * 견종 마스터 저장소입니다.
  *
  * 읽기만 있습니다. 값은 마이그레이션이 넣습니다.
- *
- * 목록 조회는 아직 두지 않습니다.
- * 드롭다운에 보일 순서를 정해야 하는데 MIX 와 OTHER 를 맨 끝에 두기로 해서
- * 단순 정렬로는 표현되지 않습니다. 견종 조회 API 와 함께 정합니다.
  */
 public interface BreedRepository {
 
@@ -22,4 +19,21 @@ public interface BreedRepository {
      * 외래 키를 걸지 않는 대신 이 조회가 그 역할을 합니다.
      */
     Optional<Breed> findByCode(String code);
+
+    /**
+     * 드롭다운에 보일 순서로 전부 돌려줍니다.
+     *
+     * 이름 가나다순이되 끝에 MIX 를, 맨 뒤에 OTHER 를 둡니다.
+     * 그 둘은 "내 개가 목록에 없을 때 고르는 자리" 라서
+     * 이름 순서에 섞이면 중간에 묻힙니다.
+     *
+     * 둘 사이의 순서도 정해져 있습니다.
+     * 믹스를 먼저 보여야 개를 기르는 사람이 "그 외" 를 고르는 일이 줄어듭니다.
+     *
+     * 순서를 이 약속에 적어 두는 이유는 그것이 화면의 요구이기 때문입니다.
+     * 어떻게 세우는지는 구현이 정하며, 데이터베이스에 맡기지 않습니다.
+     *
+     * 45행짜리 고정 마스터라 페이징하지 않습니다.
+     */
+    List<Breed> findAllForDropdown();
 }
