@@ -1,6 +1,5 @@
 package com.pawtrail.pet.application.service;
 
-import com.pawtrail.pet.application.support.AfterCommitExecutor;
 import com.pawtrail.pet.domain.model.Pet;
 import com.pawtrail.pet.domain.provider.StorageProvider;
 import com.pawtrail.pet.domain.repository.PetRepository;
@@ -43,6 +42,28 @@ import org.springframework.stereotype.Service;
  *   등록하지 않고 이탈해 생긴 고아 파일은 이 경로로 지워지지 않으며,
  *   그것은 접두사 설계 덕에 나중에 수명 주기 규칙으로 치울 수 있습니다.
  *
+ * AfterCommitExecutor 를 쓰지 않습니다
+ *
+ * 수정과 삭제 API 는 커밋 이후로 미뤄 둡니다.
+ * 트랜잭션 안에서 객체를 지우면 롤백이 났을 때 반려동물은 남았는데 사진만 사라져
+ * 프로필에 열리지 않는 사진이 박히기 때문입니다.
+ *
+ * 이 경로는 그 위험이 없습니다. 전부 지우는 일이라 롤백되면 아무것도 안 지워진 상태로 돌아갑니다.
+ * 오히려 미뤄 두면 삭제 실패가 로그 한 줄로 끝납니다.
+ * 소비는 성공으로 끝나 재시도도 DLQ 도 돌지 않고, 행을 이미 지워 그 키를 다시 찾을 길도 없습니다.
+ * 그러면 탈퇴 시 사용자 데이터를 지운다는 약속을 못 지키게 됩니다.
+ *
+ * 트랜잭션 안에서 지우면 실패가 소비 실패로 이어집니다.
+ * 공통 모듈의 DefaultErrorHandler 가 세 번 다시 시도하고 그래도 안 되면 DLQ 로 보내며,
+ * 관리자가 재발행하면 처음부터 다시 합니다.
+ *
+ * 일부만 지운 뒤 실패해도 괜찮습니다.
+ * 재발행하면 없는 키를 지우는 것이 되는데 S3 는 그때 오류를 내지 않습니다.
+ *
+ * 전용 삭제 큐를 만들지 않습니다.
+ * 표와 배치와 재시도 규칙이 새로 붙어 outbox 와 inbox 와 별개인 세 번째 장치가 됩니다.
+ * DLQ 조회 API 조차 "그 도구의 재구현" 이라며 만들지 않은 기준과 어긋납니다.
+ *
  * @Transactional 을 붙이지 않습니다.
  * 이벤트 경로는 InboxProcessor.processOnce 가 이미 트랜잭션을 열고 있어
  * 여기에 또 붙이면 경계가 어디인지 읽는 사람이 매번 따져야 합니다.
@@ -57,7 +78,6 @@ public class AccountWithdrawnService {
 
     private final PetRepository petRepository;
     private final StorageProvider storageProvider;
-    private final AfterCommitExecutor afterCommitExecutor;
 
     /**
      * 그 계정의 반려동물과 사진을 지웁니다.
@@ -70,9 +90,10 @@ public class AccountWithdrawnService {
      * ①을 먼저 하는 이유는 지우고 나면 키를 찾을 방법이 없기 때문입니다.
      * 접두사로 나열하지 않기로 했으므로 행이 유일한 출처입니다.
      *
-     * ②와 ③의 순서가 중요합니다.
-     * 트랜잭션 안에서 객체를 지우면 롤백이 나도 객체는 안 돌아와
-     * 반려동물은 남았는데 사진만 사라집니다.
+     * ③을 트랜잭션 안에서 합니다.
+     * 여기서 실패하면 소비가 실패로 끝나 재시도와 DLQ 가 걸립니다.
+     * 커밋 이후로 미루면 실패가 로그 한 줄로 끝나는데,
+     * 행을 이미 지워 그 키를 다시 찾을 길이 없어 사진이 영영 남습니다.
      *
      * pet.profile.updated 를 발행하지 않습니다.
      * auth 가 이미 account.withdrawn 을 냈고 verdict 도 그것을 받을 수 있는 자리입니다.
@@ -86,27 +107,25 @@ public class AccountWithdrawnService {
 
         int deleted = petRepository.deleteAllByAccountId(accountId);
 
+        deletePhotos(photoKeys);
+
         log.info("반려동물을 정리했습니다: accountId={}, pet={}, photo={}",
                 accountId, deleted, photoKeys.size());
-
-        schedulePhotoCleanup(accountId, photoKeys);
     }
 
     /**
-     * 커밋 이후에 사진을 지우도록 걸어 둡니다.
+     * 사진을 지웁니다.
      *
-     * 키마다 따로 걸어 둡니다.
-     * 한 작업에 여러 개를 담으면 앞엣것이 실패했을 때 뒤엣것이 아예 실행되지 않고,
-     * 무엇이 남았는지도 로그 한 줄로 뭉쳐 가릴 수 없습니다.
+     * 예외를 잡지 않습니다.
+     * 하나라도 실패하면 트랜잭션이 되돌아가고 소비도 실패로 끝나야
+     * 재시도와 DLQ 가 걸려 다시 시도할 기회가 남습니다.
      *
-     * 여기서 실패해도 요청은 성공으로 끝납니다. 커밋이 이미 끝난 뒤이기 때문입니다.
-     * 남은 객체는 닿을 방법이 없습니다.
-     * 버킷이 퍼블릭 액세스를 차단해 두었고 그 키를 아는 행이 사라졌기 때문입니다.
+     * 일부만 지운 뒤 실패해도 괜찮습니다.
+     * 재발행하면 없는 키를 지우는 것이 되는데 S3 는 그때 오류를 내지 않습니다.
      */
-    private void schedulePhotoCleanup(UUID accountId, List<String> photoKeys) {
+    private void deletePhotos(List<String> photoKeys) {
         for (String key : photoKeys) {
-            afterCommitExecutor.run(() -> storageProvider.delete(key),
-                    "탈퇴 계정 사진 삭제 accountId=" + accountId + ", key=" + key);
+            storageProvider.delete(key);
         }
     }
 }
