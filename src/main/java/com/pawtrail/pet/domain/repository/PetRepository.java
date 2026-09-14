@@ -34,4 +34,20 @@ public interface PetRepository {
      * 없는 식별자는 결과에서 빠질 뿐 오류가 아닙니다.
      */
     List<Pet> findAllByIdIn(Collection<UUID> ids);
+
+    /**
+     * 반려동물을 지웁니다.
+     *
+     * 하드 딜리트입니다.
+     * BaseEntity 를 상속하지만 deleted_at 과 deleted_by 는 영영 null 로 남습니다.
+     *
+     * 소프트로 두지 않는 이유가 둘입니다.
+     * 소프트의 근거인 "신원을 끊되 추적은 남긴다" 가 여기서는 서지 않습니다.
+     * 반려동물은 신원 주체가 아니고, 후기에 견종과 체중이 이미 스냅샷으로 복사돼 있어
+     * 행이 남아도 더 알 것이 없습니다.
+     * 그리고 행이 남으면 사진을 언제 지울지가 애매해집니다.
+     *
+     * favorite 과 visit_log 도 같은 이유로 하드입니다.
+     */
+    void delete(Pet pet);
 }

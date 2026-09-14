@@ -38,4 +38,9 @@ public class PetRepositoryImpl implements PetRepository {
     public List<Pet> findAllByIdIn(Collection<UUID> ids) {
         return petJpaRepository.findAllByIdIn(ids);
     }
+
+    @Override
+    public void delete(Pet pet) {
+        petJpaRepository.delete(pet);
+    }
 }
