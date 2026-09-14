@@ -3,6 +3,7 @@ package com.pawtrail.pet.infrastructure.persistence;
 import com.pawtrail.pet.domain.model.Breed;
 import com.pawtrail.pet.domain.repository.BreedRepository;
 import com.pawtrail.pet.infrastructure.persistence.jpa.BreedJpaRepository;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -28,9 +29,9 @@ public class BreedRepositoryImpl implements BreedRepository {
     //
     // 정렬을 질의가 아니라 여기서 하는 이유임
     //   ORDER BY 를 쓰면 한글 순서를 데이터베이스 콜레이션이 정하는데 환경마다 다름
-    //   ⛔실제로 로컬 pet_db 에서 글자 수가 앞서고 그 안에서만 가나다인 순서가 나왔음
+    //   * 실제로 로컬 pet_db 에서 글자 수가 앞서고 그 안에서만 가나다인 순서가 나왔음
     //     말티즈가 ㅁ 자리가 아니라 세 글자 무리에 끼어 사용자가 찾을 수 없었음
-    //   ⛔테스트 컨테이너와 로컬 DB 의 이미지가 달라 콜레이션도 다름
+    //   * 테스트 컨테이너와 로컬 DB 의 이미지가 달라 콜레이션도 다름
     //     질의에 맡기면 검사를 통과해도 실물이 틀릴 수 있음
     //
     // 자바 문자열의 자연 순서는 코드포인트 순이고
@@ -53,6 +54,11 @@ public class BreedRepositoryImpl implements BreedRepository {
         return breedJpaRepository.findAll().stream()
                 .sorted(DROPDOWN_ORDER)
                 .toList();
+    }
+
+    @Override
+    public List<Breed> findAllByCodeIn(Collection<String> codes) {
+        return breedJpaRepository.findAllByCodeIn(codes);
     }
 
     private static int tailRank(Breed breed) {
