@@ -43,4 +43,14 @@ public class PetRepositoryImpl implements PetRepository {
     public void delete(Pet pet) {
         petJpaRepository.delete(pet);
     }
+
+    @Override
+    public List<Pet> findAllByAccountId(UUID accountId) {
+        return petJpaRepository.findAllByAccountId(accountId);
+    }
+
+    @Override
+    public int deleteAllByAccountId(UUID accountId) {
+        return petJpaRepository.deleteAllByAccountId(accountId);
+    }
 }
