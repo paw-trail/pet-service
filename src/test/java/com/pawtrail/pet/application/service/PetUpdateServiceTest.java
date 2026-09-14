@@ -169,20 +169,23 @@ class PetUpdateServiceTest {
     }
 
     @Test
-    @DisplayName("남의 반려동물은 고칠 수 없다")
-    void 남의_반려동물은_고칠_수_없다() {
-        Pet other = pet();
-        setField(other, "accountId", UUID.randomUUID());
-        when(petRepository.findById(other.getId())).thenReturn(Optional.of(other));
+    @DisplayName("저장된 견종이 목록에서 사라져도 이름은 고칠 수 있다")
+    void 저장된_견종이_목록에서_사라져도_이름은_고칠_수_있다() {
+        Pet pet = pet();
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        // breed_code 에 외래 키가 없어 실제로 생길 수 있는 상태임
+        when(breedRepository.findByCode("MALTESE")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> petService.update(ACCOUNT_ID, other.getId(), nameOnly("x")))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", PetErrorCode.PET_NOT_FOUND);
+        PetOutput result = petService.update(ACCOUNT_ID, pet.getId(), nameOnly("새이름"));
+
+        assertThat(result.breedName()).isNull();
+        assertThat(result.species()).isNull();
+        assertThat(pet.getName()).isEqualTo("새이름");
     }
 
     @Test
-    @DisplayName("없는 견종으로는 바꿀 수 없다")
-    void 없는_견종으로는_바꿀_수_없다() {
+    @DisplayName("견종을 바꿀 때만 없는 코드를 막는다")
+    void 견종을_바꿀_때만_없는_코드를_막는다() {
         Pet pet = pet();
         when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
         when(breedRepository.findByCode("NOPE")).thenReturn(Optional.empty());
@@ -194,6 +197,36 @@ class PetUpdateServiceTest {
 
         assertThatThrownBy(() -> petService.update(ACCOUNT_ID, pet.getId(), input))
                 .isInstanceOf(CustomException.class);
+    }
+
+    @Test
+    @DisplayName("사진은 명시적 null 로만 지워진다")
+    void 사진은_명시적_null_로만_지워진다() {
+        Pet pet = pet();
+        setField(pet, "photoUrl", "pets/acc/old");
+        given(pet);
+
+        PetUpdateInput input = new PetUpdateInput(
+                false, null, false, null, false, null, false, null,
+                false, null, false, null, false, null, false, null,
+                true, null, false, null);
+
+        petService.update(ACCOUNT_ID, pet.getId(), input);
+
+        assertThat(pet.getPhotoUrl()).isNull();
+        verify(afterCommitExecutor).run(any(Runnable.class), anyString());
+    }
+
+    @Test
+    @DisplayName("남의 반려동물은 고칠 수 없다")
+    void 남의_반려동물은_고칠_수_없다() {
+        Pet other = pet();
+        setField(other, "accountId", UUID.randomUUID());
+        when(petRepository.findById(other.getId())).thenReturn(Optional.of(other));
+
+        assertThatThrownBy(() -> petService.update(ACCOUNT_ID, other.getId(), nameOnly("x")))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", PetErrorCode.PET_NOT_FOUND);
     }
 
     private void given(Pet pet) {

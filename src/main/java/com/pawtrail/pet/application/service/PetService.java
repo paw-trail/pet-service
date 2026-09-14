@@ -197,13 +197,31 @@ public class PetService {
         boolean vaccineProofAvailable = input.vaccineProofAvailableProvided()
                 ? input.vaccineProofAvailable() : pet.isVaccineProofAvailable();
 
-        // 견종을 바꾸면 있는 코드인지 확인함
-        // 안 바꿨으면 응답을 만들 때 쓸 값이라 어차피 읽음
-        Breed breed = breedRepository.findByCode(breedCode)
-                .orElseThrow(() -> {
-                    log.warn("없는 견종 코드입니다: accountId={}, breedCode={}", accountId, breedCode);
-                    return new CustomException(CommonErrorCode.VALIDATION_FAILED);
-                });
+        // 견종을 *바꾸는* 요청일 때만 있는 코드인지 강제함
+        //
+        // 지금 값을 그대로 두는 요청까지 막으면 안 됨
+        // breed_code 에 외래 키가 없어 저장된 코드가 목록에서 사라질 수 있는데
+        // (다음 번호 마이그레이션으로 견종을 지우는 경우가 그것임)
+        // 그때 이름이나 메모만 고치려는 요청까지 400 이 됨
+        //
+        // 조회는 그 상태를 이미 허용하고 있음
+        // getPet 은 orElse(null) 로 받고 toOutput 이 견종 정보를 null 로 채움
+        // 읽기는 되는데 이름 수정만 막히면 앞뒤가 맞지 않음
+        //
+        // 화면이 폼 전체를 보내 breedCode 가 늘 실려 오므로
+        // "보냈는가" 가 아니라 "지금 값과 다른가" 로 가름
+        boolean breedChanged = !breedCode.equals(pet.getBreedCode());
+        Breed breed;
+        if (breedChanged) {
+            breed = breedRepository.findByCode(breedCode)
+                    .orElseThrow(() -> {
+                        log.warn("없는 견종 코드입니다: accountId={}, breedCode={}",
+                                accountId, breedCode);
+                        return new CustomException(CommonErrorCode.VALIDATION_FAILED);
+                    });
+        } else {
+            breed = breedRepository.findByCode(breedCode).orElse(null);
+        }
 
         String oldPhotoKey = pet.getPhotoUrl();
         String photoKey = input.photoUrlProvided()

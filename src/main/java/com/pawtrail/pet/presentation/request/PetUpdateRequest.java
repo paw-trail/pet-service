@@ -177,6 +177,24 @@ public class PetUpdateRequest {
     }
 
     /**
+     * 사진 주소가 빈 문자열인 요청을 막습니다.
+     *
+     * 계약은 명시적 null 만 "지운다" 로 정했습니다.
+     * 그런데 서비스가 빈 값을 null 로 바꿔 저장하므로,
+     * 막지 않으면 빈 문자열도 사진을 지우고 옛 S3 객체까지 함께 지웁니다.
+     *
+     * 프론트 폼이 빈 입력을 "" 로 보내기 쉬운 자리입니다.
+     * 사진을 건드리지 않았는데 초기값이 빈 문자열이면 사진이 사라지고,
+     * 객체까지 지워져 되돌릴 수도 없습니다.
+     *
+     * 메모는 막지 않습니다. 빈 문자열과 null 이 사실상 같은 뜻이고 지워도 해롭지 않습니다.
+     */
+    @AssertTrue(message = "사진 주소는 비워 보낼 수 없습니다. 지우려면 null 을 보냅니다")
+    public boolean isPhotoUrlNotBlank() {
+        return !photoUrlProvided || photoUrl == null || !photoUrl.isBlank();
+    }
+
+    /**
      * 이름이 빈 문자열인 요청을 막습니다.
      *
      * @Size 는 길이만 보므로 "" 가 통과합니다.
