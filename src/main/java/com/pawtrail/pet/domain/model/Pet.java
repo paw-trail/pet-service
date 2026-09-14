@@ -109,8 +109,12 @@ public class Pet extends BaseEntity {
      * 사용자가 보냈으면 그 값이고, 안 보냈으면 체중에서 계산한 값입니다.
      * 그 계산 규칙은 등록 기능과 함께 들어옵니다.
      *
-     * 여기서는 없으면 안 되는 값이 비었는지만 봅니다.
-     * 길이와 범위 검증은 요청 객체가 이미 마친 뒤입니다.
+     * 여기서는 없으면 안 되는 값이 비었는지와 체중이 양수인지를 봅니다.
+     * 길이와 그 밖의 범위 검증은 요청 객체가 이미 마친 뒤입니다.
+     *
+     * 체중만 여기서도 보는 이유는 그 값이 크기 계산과 판정의 입력이기 때문입니다.
+     * 0 이나 음수가 들어가면 SMALL 로 떨어져 "동반 가능" 이 잘못 나갑니다.
+     * 같은 조건이 DB 에도 ck_pet_weight_positive 로 걸려 있습니다.
      */
     public static Pet create(UUID accountId, String name, String breedCode, BreedSize breedSize,
             BigDecimal weightKg, boolean carrier, boolean stroller,
@@ -121,6 +125,9 @@ public class Pet extends BaseEntity {
                 || breedSize == null || weightKg == null) {
             throw new IllegalArgumentException(
                     "accountId · name · breedCode · breedSize · weightKg 는 필수입니다.");
+        }
+        if (weightKg.signum() <= 0) {
+            throw new IllegalArgumentException("weightKg 는 0보다 커야 합니다.");
         }
         return new Pet(accountId, name, breedCode, breedSize, weightKg,
                 carrier, stroller, vaccineCompleted, vaccineProofAvailable, photoUrl, note);

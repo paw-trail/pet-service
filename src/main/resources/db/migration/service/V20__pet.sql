@@ -103,7 +103,19 @@ CREATE TABLE pet
 
     -- 크기를 체중에서만 계산하므로 비어 있으면 breed_size 를 채울 재료가 없습니다.
     -- 그래서 필수입니다.
-    weight_kg               numeric(4, 1) NOT NULL,
+    --
+    -- 0 이하를 막습니다.
+    -- 다른 컬럼에 CHECK 를 걸지 않은 이유는 enum 값이 늘면 마이그레이션이 필요해지기
+    -- 때문인데, "체중은 양수" 라는 조건은 늘어나거나 바뀔 일이 없습니다.
+    -- 이 값이 크기 계산과 판정의 입력이라 0 이나 음수가 들어가면 SMALL 로 떨어져
+    -- "동반 가능" 이 잘못 나갑니다.
+    --
+    -- 상한은 두지 않습니다.
+    -- 근거를 댈 수 있는 숫자가 없고, 지나치게 큰 값은 LARGE 로 떨어져
+    -- 거절 방향으로 안전하게 틀립니다.
+    -- 사람이 보기에 이상한 값은 요청 검증이 400 으로 막습니다.
+    weight_kg               numeric(4, 1) NOT NULL
+        CONSTRAINT ck_pet_weight_positive CHECK (weight_kg > 0),
 
     -- 목줄로는 안 되고 이동장이 있어야만 들어갈 수 있는 장소가 실재합니다.
     has_carrier             boolean       NOT NULL,
