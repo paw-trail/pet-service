@@ -1,5 +1,6 @@
 package com.pawtrail.pet.infrastructure.config;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -26,7 +27,9 @@ import org.springframework.validation.annotation.Validated;
  * @param bucket                  버킷 이름입니다. user-service 와 같은 것을 씁니다.
  * @param region                  리전입니다. 주소에 그대로 들어갑니다.
  * @param uploadExpiresSeconds    업로드 서명 유효 시간입니다.
+ *                                7일을 넘을 수 없습니다.
  * @param downloadExpiresSeconds  조회 서명 유효 시간입니다.
+ *                                7일을 넘을 수 없습니다.
  * @param maxImageBytes           올릴 수 있는 이미지의 최대 크기입니다.
  */
 @Validated
@@ -39,10 +42,18 @@ public record StorageProperties(
         @NotBlank(message = "app.storage.region 이 필요합니다")
         String region,
 
+        // 604800 은 7일임
+        // 상한이 7일인 것은 우리가 정한 값이 아니라 서명 방식이 강제하는 값임
+        // 넘는 값으로 서명을 만들려 하면 SDK 가 실패함
+        //
+        // 상한을 걸지 않으면 기동은 되고 첫 업로드 요청에서야 터짐
+        // 검증을 붙인 목적이 "설정 실수를 기동 시점에 드러내는 것" 이라 절반만 이뤄짐
         @Positive(message = "app.storage.upload-expires-seconds 는 양수여야 합니다")
+        @Max(value = 604800, message = "app.storage.upload-expires-seconds 는 7일을 넘을 수 없습니다")
         long uploadExpiresSeconds,
 
         @Positive(message = "app.storage.download-expires-seconds 는 양수여야 합니다")
+        @Max(value = 604800, message = "app.storage.download-expires-seconds 는 7일을 넘을 수 없습니다")
         long downloadExpiresSeconds,
 
         @Positive(message = "app.storage.max-image-bytes 는 양수여야 합니다")

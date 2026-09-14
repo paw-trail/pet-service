@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,13 @@ import org.springframework.web.bind.annotation.RestController;
  * 공통 모듈의 필터가 그것을 CustomUserPrincipal 로 만들어 둡니다.
  *
  * 경로에 accountId 를 두면 남의 것을 부를 수 있게 되므로 그렇게 하지 않습니다.
+ *
+ * 조회 응답 둘에 no-store 를 붙입니다.
+ * 응답의 photoUrl 이 서명된 주소라 정해진 시간 뒤 만료되기 때문입니다.
+ *
+ * 다만 이것만으로 끝나지 않습니다.
+ * 이 헤더가 막는 것은 브라우저 캐시뿐이고, 화면이 응답을 상태로 들고 있는 것은
+ * HTTP 헤더를 보지 않습니다. 그쪽은 프론트와 말로 맞춰야 합니다.
  */
 @RestController
 @RequestMapping("/api/v1/pets")
@@ -74,27 +82,33 @@ public class PetController {
      * 대표 반려동물을 앞세우지 않습니다. 대표가 누구인지는 user 가 가진 값입니다.
      *
      * 페이징하지 않습니다. 한 사람이 기르는 수만큼이라 잘라야 할 크기가 아닙니다.
+     *
+     * 응답에 서명된 사진 주소가 실리므로 캐시를 막습니다.
      */
     @GetMapping
     public ResponseEntity<CommonApiResponse<List<PetOutput>>> getMyPets(
             @CurrentUser CustomUserPrincipal principal) {
 
-        return ResponseEntity.ok(
-                CommonApiResponse.success(petService.getMyPets(principal.accountId())));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(CommonApiResponse.success(petService.getMyPets(principal.accountId())));
     }
 
     /**
      * 반려동물 하나를 봅니다.
      *
      * 없는 경우와 남의 것인 경우가 같은 404 입니다.
+     *
+     * 응답에 서명된 사진 주소가 실리므로 캐시를 막습니다.
      */
     @GetMapping("/{petId}")
     public ResponseEntity<CommonApiResponse<PetOutput>> getPet(
             @CurrentUser CustomUserPrincipal principal,
             @PathVariable UUID petId) {
 
-        return ResponseEntity.ok(
-                CommonApiResponse.success(petService.getPet(principal.accountId(), petId)));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(CommonApiResponse.success(petService.getPet(principal.accountId(), petId)));
     }
 
     /**
