@@ -114,8 +114,17 @@ CREATE TABLE pet
     -- 근거를 댈 수 있는 숫자가 없고, 지나치게 큰 값은 LARGE 로 떨어져
     -- 거절 방향으로 안전하게 틀립니다.
     -- 사람이 보기에 이상한 값은 요청 검증이 400 으로 막습니다.
+    --
+    -- NaN 을 함께 막습니다.
+    -- PostgreSQL 은 numeric 의 NaN 을 모든 일반 숫자보다 크게 비교하므로
+    -- weight_kg > 0 만으로는 'NaN' 이 그대로 통과합니다.
+    -- 그리고 다른 구현과 달리 NaN 을 NaN 과 같다고 보므로 <> 'NaN' 이 제대로 걸러 냅니다.
+    --
+    -- Infinity 는 따로 막지 않습니다.
+    -- 자릿수를 선언한 numeric 컬럼에는 담을 수 없어 저장 단계에서 이미 거부됩니다.
     weight_kg               numeric(4, 1) NOT NULL
-        CONSTRAINT ck_pet_weight_positive CHECK (weight_kg > 0),
+        CONSTRAINT ck_pet_weight_positive
+            CHECK (weight_kg > 0 AND weight_kg <> 'NaN'),
 
     -- 목줄로는 안 되고 이동장이 있어야만 들어갈 수 있는 장소가 실재합니다.
     has_carrier             boolean       NOT NULL,
