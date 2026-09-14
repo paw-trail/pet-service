@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1860" height="960" viewBox="0 0 1860 960" font-family="Noto Sans CJK KR, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif">
+<defs><marker id="ah-374151" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#374151"/></marker><marker id="as-374151" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#374151"/></marker><marker id="ah-3B82F6" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#3B82F6"/></marker><marker id="as-3B82F6" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#3B82F6"/></marker><marker id="ah-6366F1" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#6366F1"/></marker><marker id="as-6366F1" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#6366F1"/></marker><marker id="ah-16A34A" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#16A34A"/></marker><marker id="as-16A34A" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#16A34A"/></marker><marker id="ah-F97316" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#F97316"/></marker><marker id="as-F97316" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#F97316"/></marker><marker id="ah-A855F7" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#A855F7"/></marker><marker id="as-A855F7" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#A855F7"/></marker><marker id="ah-9CA3AF" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#9CA3AF"/></marker><marker id="as-9CA3AF" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#9CA3AF"/></marker><marker id="ah-D97706" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#D97706"/></marker><marker id="as-D97706" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#D97706"/></marker><marker id="ah-111827" markerWidth="11" markerHeight="9" refX="10" refY="4.5" orient="auto"><path d="M0,0 L11,4.5 L0,9 z" fill="#111827"/></marker><marker id="as-111827" markerWidth="11" markerHeight="9" refX="1" refY="4.5" orient="auto"><path d="M11,0 L0,4.5 L11,9 z" fill="#111827"/></marker></defs><rect width="1860" height="960" fill="#FFFFFF"/>
+<rect x="632.0" y="387.0" width="376" height="126" rx="18" fill="none" stroke="#22C55E" stroke-width="3" opacity="0.5"/>
+<rect x="640.0" y="395.0" width="360" height="110" rx="12" fill="#DCFCE7" stroke="#22C55E" stroke-width="3.5"/>
+<text x="820" y="428" font-size="22" font-weight="bold" text-anchor="middle" fill="#111827">pet-service  :8083</text>
+<text x="820" y="448" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">판정 입력값의 소유자 — 체중 · 장비 · 접종</text>
+<text x="820" y="464" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">API 11개  (공개 7 · internal 2 · 관리자 2)</text>
+<text x="632.0" y="381.0" font-size="13" font-weight="bold" text-anchor="start" fill="#22C55E">이 레포</text>
+<rect x="60.0" y="405.0" width="240" height="90" rx="12" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2.2"/>
+<text x="180" y="428" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">gateway-server</text>
+<text x="180" y="448" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">토큰 검증</text>
+<text x="180" y="464" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">X-User-Id · X-User-Role 주입</text>
+<rect x="670.0" y="80.0" width="300" height="80" rx="12" fill="#E0E7FF" stroke="#6366F1" stroke-width="2.2"/>
+<text x="820" y="106" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">config-server</text>
+<text x="820" y="126" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">포트 · DB · S3 키</text>
+<rect x="1410.0" y="80.0" width="300" height="80" rx="12" fill="#E0E7FF" stroke="#6366F1" stroke-width="2.2"/>
+<text x="1560" y="106" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">eureka-server</text>
+<text x="1560" y="126" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">등록 · lb:// 해석</text>
+<rect x="1410.0" y="245.0" width="300" height="110" rx="12" fill="#FFEDD5" stroke="#F97316" stroke-width="2.2"/>
+<text x="1560" y="270" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">PostgreSQL  pet_db</text>
+<text x="1560" y="290" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">pet · breed  (표 2개 + outbox · inbox)</text>
+<text x="1560" y="306" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">견종 마스터 45행 — 맹견 5종 포함</text>
+<text x="1560" y="322" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">크기는 체중에서 계산해 채움</text>
+<rect x="60.0" y="110.0" width="240" height="80" rx="12" fill="#F3F4F6" stroke="#9CA3AF" stroke-width="2.2"/>
+<text x="180" y="128" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">AWS S3</text>
+<text x="180" y="148" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">반려동물 사진</text>
+<text x="180" y="164" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">브라우저가 직접 올림</text>
+<rect x="1410.0" y="565.0" width="300" height="110" rx="12" fill="#FFFFFF" stroke="#9CA3AF" stroke-width="2.2" stroke-dasharray="9,7"/>
+<text x="1560" y="590" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">review-service</text>
+<text x="1560" y="610" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">후기를 쓸 때 견종 · 체중을</text>
+<text x="1560" y="626" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">스냅샷으로 복사해 감</text>
+<text x="1560" y="642" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">아직 없음</text>
+<rect x="60.0" y="650.0" width="240" height="100" rx="12" fill="#FFFFFF" stroke="#9CA3AF" stroke-width="2.2" stroke-dasharray="9,7"/>
+<text x="180" y="670" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">verdict-service</text>
+<text x="180" y="690" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">판정 재료로</text>
+<text x="180" y="706" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">이 반려동물을 물어봄</text>
+<text x="180" y="722" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">아직 없음</text>
+<rect x="550.0" y="770.0" width="300" height="80" rx="12" fill="#FFEDD5" stroke="#F97316" stroke-width="2.2"/>
+<text x="700" y="788" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">Kafka</text>
+<text x="700" y="808" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">pet.profile.updated 발행</text>
+<text x="700" y="824" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">account.withdrawn 수신</text>
+<rect x="1150.0" y="770.0" width="300" height="80" rx="12" fill="#F0FDF4" stroke="#86EFAC" stroke-width="2.2"/>
+<text x="1300" y="796" font-size="17" font-weight="bold" text-anchor="middle" fill="#111827">auth-service</text>
+<text x="1300" y="816" font-size="12" font-weight="normal" text-anchor="middle" fill="#4B5563">탈퇴를 알림</text>
+<polyline points="300.0,450 640.0,450" fill="none" stroke="#3B82F6" stroke-width="2.4" marker-end="url(#ah-3B82F6)"/>
+<rect x="428" y="422" width="103" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="480" y="434" font-size="13" font-weight="normal" text-anchor="middle" fill="#3B82F6">공개 7 · 관리자 2</text>
+<polyline points="820,160.0 820,395.0" fill="none" stroke="#6366F1" stroke-width="2.4" marker-end="url(#ah-6366F1)"/>
+<rect x="782" y="258" width="76" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="820.0" y="269.5" font-size="13" font-weight="normal" text-anchor="middle" fill="#6366F1">기동 시 설정</text>
+<polyline points="1000.0,450 1120,450 1120,120 1410.0,120" fill="none" stroke="#6366F1" stroke-width="2.4" marker-end="url(#ah-6366F1)"/>
+<rect x="1183" y="193" width="34" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="1200" y="205" font-size="13" font-weight="normal" text-anchor="middle" fill="#6366F1">등록</text>
+<polyline points="1000.0,450 1120,450 1120,300 1410.0,300" fill="none" stroke="#F97316" stroke-width="2.4" marker-end="url(#ah-F97316)"/>
+<rect x="1133" y="366" width="134" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="1200" y="378" font-size="13" font-weight="normal" text-anchor="middle" fill="#F97316">JPA · Flyway V20~21</text>
+<polyline points="1410,590 1260,590 1260,470 1000,470" fill="none" stroke="#16A34A" stroke-width="2.4" marker-end="url(#ah-16A34A)" stroke-dasharray="7,6"/>
+<rect x="1268" y="533" width="285" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="1272" y="545" font-size="13" font-weight="normal" text-anchor="start" fill="#16A34A">GET /internal/pets?ids=   상한 100 · 소유권 검증</text>
+<polyline points="300.0,700 480,700 480,480 640,480" fill="none" stroke="#16A34A" stroke-width="2.4" marker-end="url(#ah-16A34A)" stroke-dasharray="7,6"/>
+<rect x="490" y="580" width="167" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="494" y="592" font-size="13" font-weight="normal" text-anchor="start" fill="#16A34A">GET /internal/pets/{petId}</text>
+<polyline points="900,505 900,660 790,660 790,770" fill="none" stroke="#F97316" stroke-width="2.4" marker-end="url(#ah-F97316)"/>
+<rect x="908" y="588" width="96" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="912" y="600" font-size="13" font-weight="normal" text-anchor="start" fill="#F97316">Outbox 로 발행</text>
+<polyline points="610,770 610,620 700,620 700,505" fill="none" stroke="#F97316" stroke-width="2.4" marker-end="url(#ah-F97316)"/>
+<rect x="406" y="620" width="196" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="598" y="632" font-size="13" font-weight="normal" text-anchor="end" fill="#F97316">account.withdrawn 을 받아 지움</text>
+<polyline points="1150.0,810 850.0,810" fill="none" stroke="#9CA3AF" stroke-width="2.4" marker-end="url(#ah-9CA3AF)"/>
+<rect x="1006" y="790" width="127" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="1010" y="802" font-size="13" font-weight="normal" text-anchor="start" fill="#9CA3AF">account.withdrawn</text>
+<polyline points="640,398 430,398 430,150 300.0,150" fill="none" stroke="#9CA3AF" stroke-width="2.4" marker-end="url(#ah-9CA3AF)" stroke-dasharray="7,6"/>
+<rect x="488" y="288" width="178" height="19" rx="4" fill="#FFFFFF" opacity="0.92"/>
+<text x="492" y="300" font-size="13" font-weight="normal" text-anchor="start" fill="#9CA3AF">주소만 발급 · 탈퇴 시 객체 삭제</text>
+<text x="40" y="880" font-size="13" font-weight="normal" text-anchor="start" fill="#4B5563">크기는 견종이 아니라 체중으로만 가름 — SMALL 10kg 미만 · MEDIUM 10~25kg 미만 · LARGE 25kg 이상 · 서버가 채우되 사용자가 고친 값이 이김</text>
+<text x="40" y="902" font-size="13" font-weight="normal" text-anchor="start" fill="#4B5563">견종 마스터는 맹견 판정과 종 구분에만 쓰임 — 크기 기본값 컬럼을 두지 않아 견종을 늘리거나 줄여도 판정이 달라지지 않음</text>
+<text x="40" y="924" font-size="13" font-weight="normal" text-anchor="start" fill="#4B5563">내어 주는 두 API 는 소유권 검증이 필수임 — 없으면 아무 식별자나 넣어 남의 반려동물 기준으로 판정을 받아볼 수 있음</text>
+<text x="1836" y="948" font-size="11" text-anchor="end" fill="#9CA3AF">pet-service 를 중심으로 · 직접 연결된 것만</text></svg>
